@@ -1,6 +1,6 @@
 # %Tag(FULLTEXT)%
 cmake_minimum_required(VERSION 2.8.3)
-project(exampleprogram)
+project(isen_turtlebot)
 
 ## Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg message_generation)
@@ -18,8 +18,8 @@ catkin_package()
 ## Build talker and listener
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(listener_charles src/listener.cpp)
-target_link_libraries(listener_charles ${catkin_LIBRARIES})
-add_dependencies(listener_charles exampleprogram_generate_messages_cpp)
+add_executable(itb_listener src/listener.cpp)
+target_link_libraries(itb_listener ${catkin_LIBRARIES})
+add_dependencies(itb_listener isen_turtlebot_generate_messages_cpp)
 
 # %EndTag(FULLTEXT)%
