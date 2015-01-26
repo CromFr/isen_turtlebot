@@ -17,4 +17,4 @@ uint8 CLIFF  = 1
 
 uint8 sensor
 uint8 state
-uint bottom
+uint16 bottom
