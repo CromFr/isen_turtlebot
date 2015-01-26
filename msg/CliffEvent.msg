@@ -3,12 +3,12 @@
 # Note that, despite bumper field on SensorState messages, state field is not a
 # bitmask, but the new state of a single sensor.
 
-# sensor
+# cliff sensor
 uint8 LEFT   = 0
 uint8 CENTER = 1
 uint8 RIGHT  = 2
 
-# state
+# cliff sensor state
 uint8 FLOOR = 0
 uint8 CLIFF  = 1
 
@@ -17,4 +17,4 @@ uint8 CLIFF  = 1
 
 uint8 sensor
 uint8 state
-uint8 bottom
+uint bottom
