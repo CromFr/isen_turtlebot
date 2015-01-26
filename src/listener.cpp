@@ -91,18 +91,16 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "itb_listener");
+	ros::init(argc, argv, "itb_listener");
 
-  ros::NodeHandle n;
+	ros::NodeHandle n;
 
-  ros::Subscriber sub_bumper = n.subscribe("/mobile_base/events/bumper", 1000, bumperCallback);
+	ros::Subscriber sub_bumper = n.subscribe("/mobile_base/events/bumper", 1000, bumperCallback);
+	ros::Subscriber sub_button = n.subscribe("/mobile_base/events/button", 1000, buttonCallback);
+	ros::Subscriber sub_cliff = n.subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
 
-  ros::Subscriber sub_button = n.subscribe("/mobile_base/events/button", 1000, buttonCallback);
+	ros::spin();
 
-  ros::Subscriber sub_cliff = n.subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
-
-  ros::spin();
-
-  return 0;
+	return 0;
 }
 
