@@ -10,7 +10,7 @@ using namespace std;
 #include <kobuki_msgs/Led.h>
 
 void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
-	if(msg->state == kobuki_msgs::BumperEvent::LEFT){
+	if(msg->bumper == kobuki_msgs::BumperEvent::LEFT){
 		if(msg->state == kobuki_msgs::BumperEvent::RELEASED){
 			ROS_INFO("BUMPER LEFT RELEASED");
 		}
@@ -18,7 +18,7 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 			ROS_INFO("BUMPER LEFT PRESSED");
 		}
 	}
-	else if(msg->state == kobuki_msgs::BumperEvent::CENTER){
+	else if(msg->bumper == kobuki_msgs::BumperEvent::CENTER){
 		if(msg->state == kobuki_msgs::BumperEvent::RELEASED){
 			ROS_INFO("BUMPER CENTER RELEASED");
 		}
@@ -26,7 +26,7 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 			ROS_INFO("BUMPER CENTER PRESSED");
 		}
 	}
-	else if(msg->state == kobuki_msgs::BumperEvent::RIGHT){
+	else if(msg->bumper == kobuki_msgs::BumperEvent::RIGHT){
 		if(msg->state == kobuki_msgs::BumperEvent::RELEASED){
 			ROS_INFO("BUMPER RIGHT RELEASED");
 		}
@@ -37,7 +37,7 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 }
 
 void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
-  	if(msg->state == kobuki_msgs::ButtonEvent::Button0){
+  	if(msg->button == kobuki_msgs::ButtonEvent::Button0){
 		if(msg->state == kobuki_msgs::ButtonEvent::RELEASED){
 			ROS_INFO("BUTTON0 RELEASED");
 		}
@@ -45,7 +45,7 @@ void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
 			ROS_INFO("BUTTON0 PRESSED");
 		}
 	}
-	else if(msg->state == kobuki_msgs::ButtonEvent::Button1){
+	else if(msg->button == kobuki_msgs::ButtonEvent::Button1){
 		if(msg->state == kobuki_msgs::ButtonEvent::RELEASED){
 			ROS_INFO("BUTTON1 RELEASED");
 		}
@@ -53,7 +53,7 @@ void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
 			ROS_INFO("BUTTON1 PRESSED");
 		}
 	}
-	else if(msg->state == kobuki_msgs::ButtonEvent::Button2){
+	else if(msg->button == kobuki_msgs::ButtonEvent::Button2){
 		if(msg->state == kobuki_msgs::ButtonEvent::RELEASED){
 			ROS_INFO("BUTTON2 RELEASED");
 		}
@@ -64,7 +64,7 @@ void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
 }
 
 void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
-  	if(msg->state == kobuki_msgs::CliffEvent::LEFT){
+  	if(msg->sensor == kobuki_msgs::CliffEvent::LEFT){
 		if(msg->state == kobuki_msgs::CliffEvent::FLOOR){
 			ROS_INFO("SENSOR LEFT FLOOR");
 		}
@@ -72,7 +72,7 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 			ROS_INFO("SENSOR LEFT CLIFF");
 		}
 	}
-	else if(msg->state == kobuki_msgs::CliffEvent::CENTER){
+	else if(msg->sensor == kobuki_msgs::CliffEvent::CENTER){
 		if(msg->state == kobuki_msgs::CliffEvent::FLOOR){
 			ROS_INFO("SENSOR CENTER FLOOR");
 		}
@@ -80,7 +80,7 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 			ROS_INFO("SENSOR CENTER CLIFF");
 		}
 	}
-	else if(msg->state == kobuki_msgs::CliffEvent::RIGHT){
+	else if(msg->sensor == kobuki_msgs::CliffEvent::RIGHT){
 		if(msg->state == kobuki_msgs::CliffEvent::FLOOR){
 			ROS_INFO("SENSOR RIGHT FLOOR");
 		}
@@ -91,16 +91,16 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 }
 
 void ledCallback(const kobuki_msgs::LedConstPtr msg){
-	if(msg->state == kobuki_msgs::Led::BLACK){
+	if(msg->value == kobuki_msgs::Led::BLACK){
 		ROS_INFO("BLACK LED");
 	}
-	else if(msg->state == kobuki_msgs::Led::GREEN){
+	else if(msg->value == kobuki_msgs::Led::GREEN){
 		ROS_INFO("GREEN LED");
 	}
-	else if(msg->state == kobuki_msgs::Led::ORANGE){
+	else if(msg->value == kobuki_msgs::Led::ORANGE){
 		ROS_INFO("ORANGE LED");
 	}
-	else if(msg->state == kobuki_msgs::Led::RED){
+	else if(msg->value == kobuki_msgs::Led::RED){
 		ROS_INFO("RED LED");
 	}
 }
