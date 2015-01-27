@@ -105,8 +105,7 @@ void ledCallback(const kobuki_msgs::LedConstPtr msg){
 	}
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
 	ros::init(argc, argv, "itb_listener");
 
 	ros::NodeHandle n;
