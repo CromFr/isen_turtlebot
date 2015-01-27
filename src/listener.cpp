@@ -7,6 +7,7 @@ using namespace std;
 #include <kobuki_msgs/BumperEvent.h>
 #include <kobuki_msgs/ButtonEvent.h>
 #include <kobuki_msgs/CliffEvent.h>
+#include <kobuki_msgs/Led.h>
 
 void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	if(msg->state == kobuki_msgs::BumperEvent::LEFT){
@@ -89,6 +90,21 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 	}
 }
 
+void ledCallback(const kobuki_msgs::LedConstPtr msg){
+	if(msg->state == kobuki_msgs::Led::BLACK){
+		ROS_INFO("BLACK LED");
+	}
+	else if(msg->state == kobuki_msgs::Led::GREEN){
+		ROS_INFO("GREEN LED");
+	}
+	else if(msg->state == kobuki_msgs::Led::ORANGE){
+		ROS_INFO("ORANGE LED");
+	}
+	else if(msg->state == kobuki_msgs::Led::RED){
+		ROS_INFO("RED LED");
+	}
+}
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "itb_listener");
@@ -98,6 +114,8 @@ int main(int argc, char **argv)
 	ros::Subscriber sub_bumper = n.subscribe("/mobile_base/events/bumper", 1000, bumperCallback);
 	ros::Subscriber sub_button = n.subscribe("/mobile_base/events/button", 1000, buttonCallback);
 	ros::Subscriber sub_cliff = n.subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
+	ros::Subscriber sub_led1 = n.subscribe("/mobile_base/commands/led1", 1000, ledCallback);
+	ros::Subscriber sub_led2 = n.subscribe("/mobile_base/commands/led2", 1000, ledCallback);
 
 	ros::spin();
 
