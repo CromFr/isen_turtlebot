@@ -14,4 +14,5 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(itb_main src/main.cpp)
 target_link_libraries(itb_main ${catkin_LIBRARIES})
 
-# %EndTag(FULLTEXT)%
+#C++11
+set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
