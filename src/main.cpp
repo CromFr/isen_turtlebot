@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <unistd.h>
 using namespace std;
 
 #include <ros/ros.h>
@@ -9,8 +9,6 @@ using namespace std;
 #include <kobuki_msgs/CliffEvent.h>
 #include <kobuki_msgs/Led.h>
 #include <geometry_msgs/Twist.h>
-
-#include <unistd.h>
 
 ros::NodeHandle* node;
 ros::Subscriber 
@@ -23,7 +21,6 @@ ros::Publisher
 	pub_led1,
 	pub_led2,
 	pub_shellcmd;
-
 
 
 void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
@@ -108,7 +105,7 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 }
 
 int main(int argc, char **argv){
-	ros::init(argc, argv, "itb_listener");
+	ros::init(argc, argv, "itb_main");
 	node = new ros::NodeHandle;
 
 	//Subscribe to sensors
