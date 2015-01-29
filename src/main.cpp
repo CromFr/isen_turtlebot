@@ -9,6 +9,7 @@ using namespace std;
 #include <kobuki_msgs/CliffEvent.h>
 #include <kobuki_msgs/Led.h>
 #include <geometry_msgs/Twist.h>
+#include <sensor_msgs/Image.h>
 
 class Controller;
 Controller* ctrl;
@@ -17,7 +18,8 @@ ros::NodeHandle* node;
 ros::Subscriber 
 	sub_bumper,
 	sub_button,
-	sub_cliff;
+	sub_cliff,
+	sub_img;
 ros::Publisher
 	pub_velocity,
 	pub_led1,
@@ -140,6 +142,9 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 		ctrl->Say("Ouch");
 	}
 }
+void imgCallback(const sensor_msgs::ImageConstPtr msg){
+	cout<<"received img"<<endl;
+}
 
 
 int main(int argc, char** argv){
@@ -150,6 +155,7 @@ int main(int argc, char** argv){
 	sub_bumper = node->subscribe("/mobile_base/events/bumper", 1000, bumperCallback);
 	sub_button = node->subscribe("/mobile_base/events/button", 1000, buttonCallback);
 	sub_cliff = node->subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
+	sub_img = node->subscribe("/camera/rgb/image_color", 1000, imgCallback);
 
 	pub_velocity = node->advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1000);
 	pub_led1 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led1", 1000);
