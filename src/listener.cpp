@@ -3,6 +3,7 @@
 using namespace std;
 
 #include "ros/ros.h"
+#include <std_msgs/String.h>
 #include <kobuki_msgs/BumperEvent.h>
 #include <kobuki_msgs/ButtonEvent.h>
 #include <kobuki_msgs/CliffEvent.h>
@@ -10,6 +11,8 @@ using namespace std;
 #include <kobuki_msgs/WheelDropEvent.h>
 #include <kobuki_msgs/MotorPower.h>
 #include <geometry_msgs/Twist.h>
+
+#include <unistd.h>
 
 ros::NodeHandle* node;
 ros::Subscriber 
@@ -23,7 +26,8 @@ ros::Publisher
 	pub_motor,
 	pub_velocity,
 	pub_led1,
-	pub_led2;
+	pub_led2,
+	pub_shellcmd;
 
 
 
@@ -92,34 +96,19 @@ void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
 		}
 		else if(msg->state == kobuki_msgs::ButtonEvent::PRESSED){
 			ROS_INFO("BUTTON2 PRESSED");
+			
+			std_msgs::String msg;
+			msg.data = "play ~/hey.ogg &";
+			pub_shellcmd.publish(msg);
 		}
 	}
 }
 
 void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
-  	if(msg->sensor == kobuki_msgs::CliffEvent::LEFT){
-		if(msg->state == kobuki_msgs::CliffEvent::FLOOR){
-			ROS_INFO("SENSOR LEFT FLOOR");
-		}
-		else if(msg->state == kobuki_msgs::CliffEvent::CLIFF){
-			ROS_INFO("SENSOR LEFT CLIFF");
-		}
-	}
-	else if(msg->sensor == kobuki_msgs::CliffEvent::CENTER){
-		if(msg->state == kobuki_msgs::CliffEvent::FLOOR){
-			ROS_INFO("SENSOR CENTER FLOOR");
-		}
-		else if(msg->state == kobuki_msgs::CliffEvent::CLIFF){
-			ROS_INFO("SENSOR CENTER CLIFF");
-		}
-	}
-	else if(msg->sensor == kobuki_msgs::CliffEvent::RIGHT){
-		if(msg->state == kobuki_msgs::CliffEvent::FLOOR){
-			ROS_INFO("SENSOR RIGHT FLOOR");
-		}
-		else if(msg->state == kobuki_msgs::CliffEvent::CLIFF){
-			ROS_INFO("SENSOR RIGHT CLIFF");
-		}
+	if(msg->state == kobuki_msgs::CliffEvent::CLIFF){
+		std_msgs::String msg;
+		msg.data = "play ~/nonono.ogg &";
+		pub_shellcmd.publish(msg);
 	}
 }
 
@@ -173,6 +162,7 @@ int main(int argc, char **argv){
 	pub_velocity = node->advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1000);
 	pub_led1 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led1", 1000);
 	pub_led2 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led2", 1000);
+	pub_shellcmd = node->advertise<std_msgs::String>("itb_shellcmd_topic", 1000);
 
 	ros::spin();
 
