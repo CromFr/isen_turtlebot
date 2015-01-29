@@ -31,18 +31,12 @@ class Controller
 public:	
 	Controller():
 		cliff({false, false, false}),
-		wall({false, false, false})
+		wall({false, false, false}),
+		buttons({false, false})
 	{
 		SetLed(1, Controller::color::BLACK);
 		SetLed(2, Controller::color::BLACK);
 		ctrl->Say("I, am, ready");
-	}
-
-	bool cliff[3];
-	bool wall[3];
-
-	bool IsOnCliff(){
-		return cliff[0]||cliff[1]||cliff[2];
 	}
 
 
@@ -51,13 +45,16 @@ public:
 			SetSpeed(-0.1, 0);
 		}
 	}
+
+
+
+
+
 	void SetSpeed(float lin, float rot){
 
 		//Security
 		if(ctrl->IsOnCliff() && lin>0){
-			std_msgs::String msg;
-			msg.data = "play /usr/share/sounds/gnome/default/alerts/bark.ogg &";
-			pub_shellcmd.publish(msg);
+			ctrl->Play("/usr/share/sounds/gnome/default/alerts/bark.ogg");
 			return;
 		}
 
@@ -69,13 +66,14 @@ public:
 
 	void Say(const string& text){
 		cout<<"Turtlebot says: "<<text<<endl;
-		string cmd = "echo \"" + text + "\" | espeak -s 160 -p 100&";
-		std_msgs::String msg;
-		msg.data = cmd.c_str();
-		pub_shellcmd.publish(msg);
+		SendCommand("echo \""+text+"\" | espeak -s 160 -p 100&");
 	}
 
-	enum color{
+	void Play(const string& soundFile){
+		SendCommand("play -v 0.5 "+soundFile+"&");
+	}
+
+	enum class color{
 		BLACK=0, GREEN=1, ORANGE=2, RED=3
 	};
 	void SetLed(int nLed, color color){
@@ -90,8 +88,20 @@ public:
 			ROS_INFO("LED inconnue");
 	}
 
+	bool cliff[3];
+	bool wall[3];
+	bool buttons[2];
+
+	bool IsOnCliff(){
+		return cliff[0]||cliff[1]||cliff[2];
+	}
 
 private:
+	void SendCommand(const string& cmd){
+		std_msgs::String msg;
+		msg.data = cmd.c_str();
+		pub_shellcmd.publish(msg);
+	}
 
 };
 
@@ -99,6 +109,8 @@ private:
 
 
 void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
+	ctrl->buttons[msg->button] = msg->state;
+
   	if(msg->button == kobuki_msgs::ButtonEvent::Button0){
 		if(msg->state == kobuki_msgs::ButtonEvent::RELEASED)
 			ctrl->SetLed(1, Controller::color::BLACK);
@@ -106,32 +118,20 @@ void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
 			ctrl->SetLed(1, Controller::color::ORANGE);
 	}
 	else if(msg->button == kobuki_msgs::ButtonEvent::Button1){
-		if(msg->state == kobuki_msgs::ButtonEvent::PRESSED){
+		if(msg->state == kobuki_msgs::ButtonEvent::PRESSED)
 			ctrl->SetSpeed(0.1,0);
-		}
 	}
 	else if(msg->button == kobuki_msgs::ButtonEvent::Button2){
-		if(msg->state == kobuki_msgs::ButtonEvent::RELEASED){
-			ROS_INFO("BUTTON2 RELEASED");
-		}
-		else if(msg->state == kobuki_msgs::ButtonEvent::PRESSED){
-			ROS_INFO("BUTTON2 PRESSED");
-			
-			std_msgs::String msg;
-			msg.data = "play ~/hey.ogg &";
-			pub_shellcmd.publish(msg);
-		}
+		if(msg->state == kobuki_msgs::ButtonEvent::PRESSED)
+			ctrl->Play("~/hey.ogg");
 	}
 }
 
 void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 	ctrl->cliff[msg->sensor] = msg->state;
 
-	if(msg->state == kobuki_msgs::CliffEvent::CLIFF){
-		std_msgs::String msg;
-		msg.data = "play ~/nonono.ogg &";
-		pub_shellcmd.publish(msg);
-	}
+	if(msg->state == kobuki_msgs::CliffEvent::CLIFF)
+		ctrl->Play("~/nonono.ogg");
 }
 void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	ctrl->wall[msg->bumper] = msg->state;
@@ -142,7 +142,7 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 }
 
 
-int main(int argc, char **argv){
+int main(int argc, char** argv){
 	ros::init(argc, argv, "itb_main");
 	node = new ros::NodeHandle;
 
@@ -167,7 +167,6 @@ int main(int argc, char **argv){
 		ros::spinOnce();
 		loopRate.sleep();
 	}
-	
 
 	return 0;
 }
