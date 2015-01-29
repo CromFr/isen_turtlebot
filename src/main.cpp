@@ -14,8 +14,7 @@ using namespace std;
 //OpenCV
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 class Controller;
 Controller* ctrl;
@@ -157,7 +156,20 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 		cerr<<"cv_bridge exception: "<<e.what()<<endl;;
 		return;
 	}
-	
+	//OpenCV Processing:
+	//===================
+	using namespace cv;
+
+	cvtColor(cv_ptr->image, cv_ptr->image,CV_RGB2GRAY);
+
+	vector<Vec3f> circles;
+	HoughCircles(cv_ptr->image, circles, CV_HOUGH_GRADIENT, 4, cv_ptr->image.rows/4, 200, 200 );
+	for( size_t i = 0; i < circles.size(); i++ ) {
+		Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+		int radius = cvRound(circles[i][2]);
+		circle(cv_ptr->image, center, radius, Scalar(rand()%255, rand()%255, rand()%255), -1, 8, 0 );
+	}
+
 	cv::imshow("img", cv_ptr->image);
 	cv::waitKey(3);
 }
