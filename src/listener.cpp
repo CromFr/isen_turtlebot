@@ -2,14 +2,12 @@
 
 using namespace std;
 
-#include "ros/ros.h"
+#include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <kobuki_msgs/BumperEvent.h>
 #include <kobuki_msgs/ButtonEvent.h>
 #include <kobuki_msgs/CliffEvent.h>
 #include <kobuki_msgs/Led.h>
-#include <kobuki_msgs/WheelDropEvent.h>
-#include <kobuki_msgs/MotorPower.h>
 #include <geometry_msgs/Twist.h>
 
 #include <unistd.h>
@@ -18,10 +16,7 @@ ros::NodeHandle* node;
 ros::Subscriber 
 	sub_bumper,
 	sub_button,
-	sub_cliff,
-	sub_led1,
-	sub_led2,
-	sub_wheel;
+	sub_cliff;
 ros::Publisher
 	pub_motor,
 	pub_velocity,
@@ -112,40 +107,6 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 	}
 }
 
-void ledCallback(const kobuki_msgs::LedConstPtr msg){
-	if(msg->value == kobuki_msgs::Led::BLACK){
-		ROS_INFO("BLACK LED");
-	}
-	else if(msg->value == kobuki_msgs::Led::GREEN){
-		ROS_INFO("GREEN LED");
-	}
-	else if(msg->value == kobuki_msgs::Led::ORANGE){
-		ROS_INFO("ORANGE LED");
-	}
-	else if(msg->value == kobuki_msgs::Led::RED){
-		ROS_INFO("RED LED");
-	}
-}
-
-void wheelCallback(const kobuki_msgs::WheelDropEventConstPtr msg){
-	if(msg->wheel == kobuki_msgs::WheelDropEvent::LEFT){
-		if(msg->state == kobuki_msgs::WheelDropEvent::RAISED){
-			ROS_INFO("LEFT WHEEL RAISED");
-		}
-		else if(msg->state == kobuki_msgs::WheelDropEvent::DROPPED){
-			ROS_INFO("LEFT WHEEL DROPPED");
-		}
-	}
-	else if(msg->wheel == kobuki_msgs::WheelDropEvent::RIGHT){
-		if(msg->state == kobuki_msgs::WheelDropEvent::RAISED){
-			ROS_INFO("RIGHT WHEEL RAISED");
-		}
-		else if(msg->state == kobuki_msgs::WheelDropEvent::DROPPED){
-			ROS_INFO("RIGHT WHEEL DROPPED");
-		}
-	}	
-}
-
 int main(int argc, char **argv){
 	ros::init(argc, argv, "itb_listener");
 	node = new ros::NodeHandle;
@@ -154,9 +115,6 @@ int main(int argc, char **argv){
 	sub_bumper = node->subscribe("/mobile_base/events/bumper", 1000, bumperCallback);
 	sub_button = node->subscribe("/mobile_base/events/button", 1000, buttonCallback);
 	sub_cliff = node->subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
-	sub_led1 = node->subscribe("/mobile_base/commands/led1", 1000, ledCallback);
-	sub_led2 = node->subscribe("/mobile_base/commands/led2", 1000, ledCallback);
-	sub_wheel = node->subscribe("/mobile_base/events/wheel_drop", 1000, wheelCallback);
 
 
 	pub_velocity = node->advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1000);
