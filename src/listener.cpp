@@ -8,6 +8,7 @@ using namespace std;
 #include <kobuki_msgs/ButtonEvent.h>
 #include <kobuki_msgs/CliffEvent.h>
 #include <kobuki_msgs/Led.h>
+#include <kobuki_msgs/WheelDropEvent.h>
 
 void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	if(msg->bumper == kobuki_msgs::BumperEvent::LEFT){
