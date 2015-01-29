@@ -4,7 +4,7 @@ project(isen_turtlebot)
 
 ## Find catkin and any catkin packages
 set(OpenCV_DIR /usr/share/OpenCV)
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs OpenCV)
+find_package(catkin REQUIRED COMPONENTS roscpp std_msgs sensor_msgs cv_bridge OpenCV)
 
 ## Declare a catkin package
 catkin_package()

@@ -3,6 +3,7 @@
 using namespace std;
 
 #include <ros/ros.h>
+//Messages
 #include <std_msgs/String.h>
 #include <kobuki_msgs/BumperEvent.h>
 #include <kobuki_msgs/ButtonEvent.h>
@@ -10,6 +11,11 @@ using namespace std;
 #include <kobuki_msgs/Led.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Image.h>
+//OpenCV
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 class Controller;
 Controller* ctrl;
@@ -143,7 +149,17 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	}
 }
 void imgCallback(const sensor_msgs::ImageConstPtr msg){
-	cout<<"received img"<<endl;
+	cv_bridge::CvImagePtr cv_ptr;
+	try{
+		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+	}
+	catch (cv_bridge::Exception& e){
+		cerr<<"cv_bridge exception: "<<e.what()<<endl;;
+		return;
+	}
+	
+	cv::imshow("img", cv_ptr->image);
+	cv::waitKey(3);
 }
 
 
