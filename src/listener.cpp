@@ -105,6 +105,25 @@ void ledCallback(const kobuki_msgs::LedConstPtr msg){
 	}
 }
 
+void wheelCallback(const kobuki_msgs::WheelDropEventConstPtr msg){
+	if(msg->wheel == kobuki_msgs::WheelDropEvent::LEFT){
+		if(msg->state == kobuki_msgs::WheelDropEvent::RAISED){
+			ROS_INFO("LEFT WHEEL RAISED");
+		}
+		else if(msg->state == kobuki_msgs::WheelDropEvent::DROPPED){
+			ROS_INFO("LEFT WHEEL DROPPED");
+		}
+	}
+	else if(msg->wheel == kobuki_msgs::WheelDropEvent::RIGHT){
+		if(msg->state == kobuki_msgs::WheelDropEvent::RAISED){
+			ROS_INFO("RIGHT WHEEL RAISED");
+		}
+		else if(msg->state == kobuki_msgs::WheelDropEvent::DROPPED){
+			ROS_INFO("RIGHT WHEEL DROPPED");
+		}
+	}	
+}
+
 int main(int argc, char **argv){
 	ros::init(argc, argv, "itb_listener");
 
@@ -115,6 +134,7 @@ int main(int argc, char **argv){
 	ros::Subscriber sub_cliff = n.subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
 	ros::Subscriber sub_led1 = n.subscribe("/mobile_base/commands/led1", 1000, ledCallback);
 	ros::Subscriber sub_led2 = n.subscribe("/mobile_base/commands/led2", 1000, ledCallback);
+	ros::Subscriber sub_wheel = n.subscribe("/mobile_base/events/wheel_drop", 1000, wheelCallback);
 
 	ros::spin();
 
