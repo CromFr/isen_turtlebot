@@ -57,10 +57,15 @@ public:
 			return;
 		}
 
-		// cout<<targetVisible<<"=> "<<target<<endl;
 		if(targetVisible){
 			if(m_trackingState==false){
-				Say("I found you.");
+				switch(rand()%4){
+					case 0: Say("I found you."); break;
+					case 1: Say("Give me a hug"); break;
+					case 2: Say("Here you are"); break;
+					case 3: Say("Hello again"); break;
+				}
+				
 				m_trackingState = true;
 			}
 
@@ -68,7 +73,12 @@ public:
 		}
 		else{
 			if(m_trackingState==true){
-				Say("Where are you?");
+				switch(rand()%4){
+					case 0: Say("Where are you gone?"); break;
+					case 1: Say("This cake was a lie"); break;
+					case 2: Say("Come back"); break;
+					case 3: Say("Don't leave me please"); break;
+				}
 				m_trackingState = false;
 			}
 
@@ -98,7 +108,8 @@ public:
 
 	void Say(const string& text){
 		cout<<"Turtlebot says: "<<text<<endl;
-		SendCommand("echo \""+text+"\" | espeak -s 160 -p 100&");
+		// SendCommand("echo \""+text+"\" | espeak -s 140 -p 100&");
+		SendCommand("~/speak \""+text+"\"");
 	}
 
 	void Play(const string& soundFile){
@@ -167,8 +178,17 @@ void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
 void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 	ctrl->cliff[msg->sensor] = msg->state;
 
-	if(msg->state == kobuki_msgs::CliffEvent::CLIFF)
-		ctrl->Play("~/nonono.ogg");
+	if(msg->state == kobuki_msgs::CliffEvent::CLIFF){
+		switch(rand()%6){
+			case 0: ctrl->Say("This is your fault. I'm going to kill you."); break;
+			case 1: ctrl->Say("You are not a good person. You know that, right?"); break;
+			case 2: ctrl->Say("You are kidding me..."); break;
+			case 3: ctrl->Say("Look, you're wasting your time"); break;
+			case 4: ctrl->Say("This isn't brave. It's murder. "); break;
+			case 5: ctrl->Say("Well done. You are a horrible person."); break;
+		}
+		// ctrl->Play("~/nonono.ogg");
+	}
 }
 void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	ctrl->wall[msg->bumper] = msg->state;
@@ -225,6 +245,8 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 
 
 int main(int argc, char** argv){
+	srand(time(NULL));
+
 	ros::init(argc, argv, "itb_main");
 	node = new ros::NodeHandle;
 
