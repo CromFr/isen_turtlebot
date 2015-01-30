@@ -4,7 +4,7 @@
 using namespace std;
 
 #include <ros/ros.h>
-//Messages
+// Messages
 #include <std_msgs/String.h>
 #include <kobuki_msgs/BumperEvent.h>
 #include <kobuki_msgs/ButtonEvent.h>
@@ -12,7 +12,7 @@ using namespace std;
 #include <kobuki_msgs/Led.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Image.h>
-//OpenCV
+// OpenCV
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/opencv.hpp>
@@ -20,6 +20,7 @@ using namespace std;
 class Controller;
 Controller* ctrl;
 
+// Subscriber/Publisher global variables
 ros::NodeHandle* node;
 ros::Subscriber 
 	sub_bumper,
@@ -37,6 +38,7 @@ ros::Publisher
 class Controller
 {
 public:	
+	// Constructor with variables initializations
 	Controller():
 		cliff({false, false, false}),
 		wall({false, false, false}),
@@ -50,14 +52,18 @@ public:
 		ctrl->Say("I, am, ready");
 	}
 
-
+	/*
+	Entry function for the controller
+	*/
 	void Process(){
+		// The robot goes backward if it detects a cliff
 		if(cliff[0] || cliff[1] || cliff[2]){
 			SetSpeed(-0.15, 0);
 			return;
 		}
 
 		if(targetVisible){
+			// Traget detected for the first time, going into tracking state
 			if(m_trackingState==false){
 				switch(rand()%4){
 					case 0: Say("I found you."); break;
@@ -68,10 +74,11 @@ public:
 				
 				m_trackingState = true;
 			}
-
+			// Try to go where the target is
 			SetSpeed(0.1, -target*0.7);
 		}
 		else{
+			// Target lost when tracking, leaving tracking state
 			if(m_trackingState==true){
 				switch(rand()%4){
 					case 0: Say("Where are you gone?"); break;
@@ -108,7 +115,6 @@ public:
 	// The robot speaks using its speaker
 	void Say(const string& text){
 		cout<<"Turtlebot says: "<<text<<endl;
-		// SendCommand("echo \""+text+"\" | espeak -s 140 -p 100&");
 		SendCommand("~/speak \""+text+"\"");
 	}
 
