@@ -263,7 +263,7 @@ void imgProcessing(cv::Mat& image){
 	HoughCircles(image, circles, CV_HOUGH_GRADIENT, 1, image.rows/4, 70, 100);
 	if(circles.size()>0){
 		ctrl->targetVisible = 5;
-		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.rows)-1.0;
+		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.rows)-1.4;
 
 		// Display all the circles on the picture
 		for(auto c : circles){
