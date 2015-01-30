@@ -63,8 +63,17 @@ public:
 		}
 
 		// The robot goes back and turns if it detects a wall
-		if(wall[0] || wall[1] || wall[2]){
+		if(wall[0]){
+			SetSpeed(-0.2, 1);
+			return;
+		}
+		if(wall[1]){
+			SetSpeed(-0.2, 0);
+			return;
+		}
+		if(wall[2]){
 			SetSpeed(-0.2, -1);
+			return;
 		}
 
 		if(targetVisible){
