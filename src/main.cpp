@@ -62,6 +62,10 @@ public:
 			return;
 		}
 
+		if(wall[0] || wall[1] || wall[2]){
+			SetSpeed(-0.5, 0);
+		}
+
 		if(targetVisible){
 			// Traget detected for the first time, going into tracking state
 			if(m_trackingState==false){
