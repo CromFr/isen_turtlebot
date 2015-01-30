@@ -86,18 +86,17 @@ public:
 
 	}
 
-
-
-
-
+	/* 
+	Set the linear value to move forward or move back the robot, 
+	and the rotation value to change to angle of the target
+	*/
 	void SetSpeed(float lin, float rot){
 
-		//Security
+		// Security, play a sound if a cliff is detected
 		if(ctrl->IsOnCliff() && lin>0){
 			ctrl->Play("/usr/share/sounds/gnome/default/alerts/bark.ogg");
 			return;
 		}
-
 		geometry_msgs::Twist msg;
 		msg.linear.x = lin;
 		msg.angular.x = rot;
@@ -106,12 +105,14 @@ public:
 		pub_velocity.publish(msg);
 	}
 
+	// The robot speaks using its speaker
 	void Say(const string& text){
 		cout<<"Turtlebot says: "<<text<<endl;
 		// SendCommand("echo \""+text+"\" | espeak -s 140 -p 100&");
 		SendCommand("~/speak \""+text+"\"");
 	}
 
+	// Play a sound
 	void Play(const string& soundFile){
 		SendCommand("play -v 0.5 "+soundFile+"&");
 	}
@@ -119,6 +120,7 @@ public:
 	enum class color{
 		BLACK=0, GREEN=1, ORANGE=2, RED=3
 	};
+	
 	void SetLed(int nLed, color color){
 		kobuki_msgs::Led msg;
 		msg.value = (uint8_t)color;
@@ -150,35 +152,47 @@ private:
 	}
 
 	bool m_trackingState;
-
 };
 
-
-
-
+/*
+The function buttonCallback provides a button event.
+This message is generated whenever a particular button is pressed or released.
+*/
 void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
+	// The controller catches the state of the 3 buttons
 	ctrl->buttons[msg->button] = msg->state;
-
+	
   	if(msg->button == kobuki_msgs::ButtonEvent::Button0){
+  		// If the button Button0 is released, LED 1 set to BLACK
 		if(msg->state == kobuki_msgs::ButtonEvent::RELEASED)
 			ctrl->SetLed(1, Controller::color::BLACK);
+		// If the button Button0 is pressed, LED 1 set to ORANGE
 		else if(msg->state == kobuki_msgs::ButtonEvent::PRESSED)
 			ctrl->SetLed(1, Controller::color::ORANGE);
 	}
+	// If the button Button1 is pressed, call function SetSpeed
 	else if(msg->button == kobuki_msgs::ButtonEvent::Button1){
 		if(msg->state == kobuki_msgs::ButtonEvent::PRESSED)
 			ctrl->SetSpeed(0.1,0.0);
 	}
+	// If the button Button2 is pressed, call function Play
 	else if(msg->button == kobuki_msgs::ButtonEvent::Button2){
 		if(msg->state == kobuki_msgs::ButtonEvent::PRESSED)
 			ctrl->Play("~/hey.ogg");
 	}
 }
 
+/*
+The function cliffCallback provides a cliff sensor event.
+This message is generated whenever a particular cliff sensor signals that the
+robot approaches or moves away from a cliff.
+*/
 void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
+	// The controller catches the state of cliff sensors
 	ctrl->cliff[msg->sensor] = msg->state;
-
+	// If cliff sensor catches a cliff
 	if(msg->state == kobuki_msgs::CliffEvent::CLIFF){
+		// Select a random number between 0 and 5
 		switch(rand()%6){
 			case 0: ctrl->Say("This is your fault. I'm going to kill you."); break;
 			case 1: ctrl->Say("You are not a good person. You know that, right?"); break;
@@ -190,9 +204,15 @@ void cliffCallback(const kobuki_msgs::CliffEventConstPtr msg){
 		// ctrl->Play("~/nonono.ogg");
 	}
 }
-void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
-	ctrl->wall[msg->bumper] = msg->state;
 
+/*
+The function bumperCallback rovides a bumper event.
+This message is generated whenever a particular bumper is pressed or released.
+*/
+void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
+	// The controller catches the state of bumpers
+	ctrl->wall[msg->bumper] = msg->state;
+	// If the bumper hit a wall, state is set to 1 (PRESSED)
 	if(msg->state == 1){
 		ctrl->Say("Ouch");
 	}
@@ -233,20 +253,25 @@ void imgProcessing(cv::Mat& image){
 	waitKey(3);
 }
 
+/*
+
+*/
 void imgCallback(const sensor_msgs::ImageConstPtr msg){
+	// Remove 1 image on 3 to improve camera image quality
 	static int i = 0;
 	i = (i+1)%2;
 	if(i!=0)return;
-
+	// Convert the image to OpenCV format
 	cv_bridge::CvImagePtr cv_ptr;
 	try{
 		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
 	}
 	catch (cv_bridge::Exception& e){
+		// If the convertion did not work, send an error message
 		cerr<<"cv_bridge exception: "<<e.what()<<endl;;
 		return;
 	}
-
+	// Use of a thread and detach it when the task is over
 	thread t(imgProcessing, cv_ptr->image);
 	t.detach();
 }
