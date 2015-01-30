@@ -39,7 +39,9 @@ public:
 	Controller():
 		cliff({false, false, false}),
 		wall({false, false, false}),
-		buttons({false, false})
+		buttons({false, false}),
+		targetVisible(false),
+		target(0.0)
 	{
 		SetLed(1, Controller::color::BLACK);
 		SetLed(2, Controller::color::BLACK);
@@ -51,6 +53,8 @@ public:
 		if(cliff[0] || cliff[1] || cliff[2]){
 			SetSpeed(-0.1, 0);
 		}
+
+		cout<<targetVisible<<"=> "<<target<<endl;
 	}
 
 
@@ -98,6 +102,9 @@ public:
 	bool cliff[3];
 	bool wall[3];
 	bool buttons[2];
+
+	bool targetVisible;
+	float target;
 
 	bool IsOnCliff(){
 		return cliff[0]||cliff[1]||cliff[2];
@@ -148,6 +155,10 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	}
 }
 void imgCallback(const sensor_msgs::ImageConstPtr msg){
+	static int i = 0;
+	i = (i+1)%3;
+	if(i!=0)return;
+
 	cv_bridge::CvImagePtr cv_ptr;
 	try{
 		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
@@ -160,14 +171,15 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 	//===================
 	using namespace cv;
 
-	cvtColor(cv_ptr->image, cv_ptr->image,CV_RGB2GRAY);
-
 	vector<Vec3f> circles;
-	HoughCircles(cv_ptr->image, circles, CV_HOUGH_GRADIENT, 4, cv_ptr->image.rows/4, 200, 200 );
-	for( size_t i = 0; i < circles.size(); i++ ) {
-		Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-		int radius = cvRound(circles[i][2]);
-		circle(cv_ptr->image, center, radius, Scalar(rand()%255, rand()%255, rand()%255), -1, 8, 0 );
+	HoughCircles(cv_ptr->image, circles, CV_HOUGH_GRADIENT, 1, cv_ptr->image.rows/4, 70, 100, 5, 0 );
+	if(circles.size()>0){
+		ctrl->targetVisible = true;
+
+		ctrl->target = 2.0*(float)(circles[0][0])/(float)(cv_ptr->image.rows)-1.0;
+	}
+	else{
+		ctrl->targetVisible = false;
 	}
 
 	cv::imshow("img", cv_ptr->image);
@@ -183,7 +195,7 @@ int main(int argc, char** argv){
 	sub_bumper = node->subscribe("/mobile_base/events/bumper", 1000, bumperCallback);
 	sub_button = node->subscribe("/mobile_base/events/button", 1000, buttonCallback);
 	sub_cliff = node->subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
-	sub_img = node->subscribe("/camera/rgb/image_color", 1000, imgCallback);
+	sub_img = node->subscribe("/camera/rgb/image_color", 1, imgCallback);
 
 	pub_velocity = node->advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1000);
 	pub_led1 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led1", 1000);
