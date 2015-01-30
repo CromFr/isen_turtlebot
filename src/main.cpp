@@ -255,17 +255,37 @@ Picture processing function
 void imgProcessing(cv::Mat& image){
 	using namespace cv;
 
-	// 15x15 Gaussian Blur applied to the picture to simplify the circles detection
-	GaussianBlur(image, image, Size(15, 15), 0, 0);
+	static Mat last_image;
+	static int detectedCnt = 0;
+	static vector<Point2f> pointsSource;
 
-	// Circles search in the picture
+	static bool init = false;
+	if(!init){
+		last_image = image;
+		init = true;
+	}
+
+	//Hough circle detection
+	Mat image_hough;
+	GaussianBlur(image, image_hough, Size(15, 15), 0, 0);
 	vector<Vec3f> circles;
-	HoughCircles(image, circles, CV_HOUGH_GRADIENT, 1, image.rows/4, 70, 100);
+	HoughCircles(image, circles, CV_HOUGH_GRADIENT, 1, image.rows/4, 70, 120);
 	if(circles.size()>0){
-		ctrl->targetVisible = 5;
-		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.rows)-1.4;
+		cout<<"Found hough"<<endl;
+		//Circle detected
+		Point2f center(circles[0][0], circles[0][1]);
+		float radius = circles[0][2];
 
-		// Display all the circles on the picture
+		ctrl->targetVisible = true;
+
+		//Register points
+		pointsSource.clear();
+		pointsSource.push_back(Point2f(radius,0)+center);
+		pointsSource.push_back(Point2f(-radius,0)+center);
+		pointsSource.push_back(Point2f(0,radius)+center);
+		pointsSource.push_back(Point2f(0,-radius)+center);
+
+		//Circle display
 		for(auto c : circles){
 			Point center(cvRound(c[0]), cvRound(c[1]));
 			int radius = cvRound(c[2]);
@@ -275,15 +295,56 @@ void imgProcessing(cv::Mat& image){
 			circle(image, center, radius-5, Scalar(255,255,255));
 		}
 	}
-	else{
-		// If no circles detected, let 5 iterations goes before alert on the lack of circle (avoid short error in detections)
-		if(ctrl->targetVisible>0)
-			ctrl->targetVisible--;
+	else if(ctrl->targetVisible){
+
+		if(pointsSource.size()>0){
+			//Detection with optical flow
+			TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+				
+			vector<Point2f> pointsFound;
+			vector<uchar> status;
+			vector<float> err;
+			calcOpticalFlowPyrLK(last_image, image, pointsSource, pointsFound, status, err, Size(31,31), 3, termcrit, 0, 0.001);
+
+			if(status[0]+status[1]+status[2]+status[3] == 4){
+				cout<<"\t Detected with optical flow"<<endl;
+
+				Point2f center(
+					(status[0]?pointsFound[0] : Point2f(0.0,0.0))+
+					(status[1]?pointsFound[1] : Point2f(0.0,0.0))+
+					(status[2]?pointsFound[2] : Point2f(0.0,0.0))+
+					(status[3]?pointsFound[3] : Point2f(0.0,0.0))
+				);
+				center.x /= (float)(status[0]+status[1]+status[2]+status[3]);
+				center.y /= (float)(status[0]+status[1]+status[2]+status[3]);
+
+				circle(image, center, 30, Scalar(0,0,0));
+				circle(image, center, 30-5, Scalar(255,255,255));
+
+				if(status[0]) circle(image, pointsFound[0], 5, Scalar(128,128,128));
+				if(status[1]) circle(image, pointsFound[1], 5, Scalar(128,128,128));
+				if(status[2]) circle(image, pointsFound[2], 5, Scalar(128,128,128));
+				if(status[3]) circle(image, pointsFound[3], 5, Scalar(128,128,128));
+
+
+				ctrl->targetVisible = true;
+				ctrl->target = 2.0*(float)(center.x)/(float)(image.rows)-1.0;
+			}
+			else{
+				cout<<"\t\t Nothing detected"<<endl;
+				ctrl->targetVisible = false;
+			}
+
+
+			// cout<<pointsFound[0]<<"\t"<<pointsFound[1]<<"\t"<<pointsFound[2]<<"\t"<<pointsFound[3]<<endl;
+		}
 	}
 
-	// Display the picture
+
 	imshow("img", image);
 	waitKey(3);
+
+	last_image = image;
 }
 
 /*
