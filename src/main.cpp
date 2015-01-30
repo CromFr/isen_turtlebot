@@ -70,8 +70,7 @@ public:
 					case 1: Say("Give me a hug"); break;
 					case 2: Say("Here you are"); break;
 					case 3: Say("Hello again"); break;
-				}
-				
+				}				
 				m_trackingState = true;
 			}
 			// Try to go where the target is
@@ -95,7 +94,7 @@ public:
 
 	/* 
 	Set the linear value to move forward or move back the robot, 
-	and the rotation value to change to angle of the target
+	and the rotation values to change to angle of the target
 	*/
 	void SetSpeed(float lin, float rot){
 
@@ -105,10 +104,13 @@ public:
 			return;
 		}
 		geometry_msgs::Twist msg;
+		// Linear value
 		msg.linear.x = lin;
+		// Rotation values
 		msg.angular.x = rot;
 		msg.angular.y = rot;
 		msg.angular.z = rot;
+		// Linear and rotations values put in publisher pub_velocity
 		pub_velocity.publish(msg);
 	}
 
@@ -123,40 +125,49 @@ public:
 		SendCommand("play -v 0.5 "+soundFile+"&");
 	}
 
+	// color can be set to black, green, orange or red
 	enum class color{
 		BLACK=0, GREEN=1, ORANGE=2, RED=3
 	};
 	
+
 	void SetLed(int nLed, color color){
 		kobuki_msgs::Led msg;
 		msg.value = (uint8_t)color;
 
+		// If LED 1, put its value in publisher pub_led1
 		if(nLed==1)
 			pub_led1.publish(msg);
+		// If LED 2, put its value in publisher pub_led2
 		else if(nLed==2)
 			pub_led2.publish(msg);
 		else
 			ROS_INFO("LED inconnue");
 	}
 
+	// Statement of tables cliff, wall and buttons used in functions cliffCallback, bumperCallback and buttonCallback
 	bool cliff[3];
 	bool wall[3];
 	bool buttons[2];
 
+	// targetVisible set to 1 if the target is visible, set to 0 else
 	int targetVisible;
+	// The value of target is between -1 and 1, target = 0 when the target is on the center of the camera image
 	float target;
 
+	// Function returns 1 when a cliff is detected
 	bool IsOnCliff(){
 		return cliff[0]||cliff[1]||cliff[2];
 	}
 
 private:
+	// Send a ssh command to the turtlebot, to make it play a sound or speak
 	void SendCommand(const string& cmd){
 		std_msgs::String msg;
 		msg.data = cmd.c_str();
 		pub_shellcmd.publish(msg);
 	}
-
+	// Boolean used to launch the treatment only once
 	bool m_trackingState;
 };
 
