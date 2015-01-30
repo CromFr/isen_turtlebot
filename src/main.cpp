@@ -56,14 +56,15 @@ public:
 	Entry function for the controller
 	*/
 	void Process(){
-		// The robot goes backward if it detects a cliff
+		// The robot goes back if it detects a cliff
 		if(cliff[0] || cliff[1] || cliff[2]){
 			SetSpeed(-0.15, 0);
 			return;
 		}
 
+		// The robot goes back and turns if it detects a wall
 		if(wall[0] || wall[1] || wall[2]){
-			SetSpeed(-0.5, 0);
+			SetSpeed(-0.2, -1);
 		}
 
 		if(targetVisible){
@@ -97,7 +98,7 @@ public:
 	}
 
 	/* 
-	Set the linear value to move forward or move back the robot, 
+	Set the speed value to move forward or move back the robot, 
 	and the rotation values to change to angle of the target
 	*/
 	void SetSpeed(float lin, float rot){
@@ -108,13 +109,13 @@ public:
 			return;
 		}
 		geometry_msgs::Twist msg;
-		// Linear value
+		// Speed value
 		msg.linear.x = lin;
 		// Rotation values
 		msg.angular.x = rot;
 		msg.angular.y = rot;
 		msg.angular.z = rot;
-		// Linear and rotations values put in publisher pub_velocity
+		// Speed and rotations values put in publisher pub_velocity
 		pub_velocity.publish(msg);
 	}
 
