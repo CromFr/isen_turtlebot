@@ -89,6 +89,7 @@ public:
 			}
 			// Try to go where the target is
 			SetSpeed(0.1, -target*0.7);
+			cout<<target<<endl;
 		}
 		else{
 			// Target lost when tracking, leaving tracking state
@@ -267,9 +268,10 @@ void imgProcessing(cv::Mat& image){
 
 	//Hough circle detection
 	Mat image_hough;
-	GaussianBlur(image, image_hough, Size(15, 15), 0, 0);
+	//GaussianBlur(image, image_hough, Size(15, 15), 0, 0);
 	vector<Vec3f> circles;
 	HoughCircles(image, circles, CV_HOUGH_GRADIENT, 1, image.rows/4, 70, 120);
+	// HoughCircles(image, circles, CV_HOUGH_GRADIENT, 2, image.rows/4, 200, 200);
 	if(circles.size()>0){
 		cout<<"Found hough"<<endl;
 		//Circle detected
@@ -277,23 +279,29 @@ void imgProcessing(cv::Mat& image){
 		float radius = circles[0][2];
 
 		ctrl->targetVisible = true;
-		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.rows)-1.0;
+		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.cols)-1.0;
 
 		//Register points
-		pointsSource.clear();
-		pointsSource.push_back(Point2f(radius,0)+center);
-		pointsSource.push_back(Point2f(-radius,0)+center);
-		pointsSource.push_back(Point2f(0,radius)+center);
-		pointsSource.push_back(Point2f(0,-radius)+center);
+		if (center.x-radius>5 && center.y - radius>5 && center.x+radius<image.cols && center.y+radius<image.rows ){
+			pointsSource.clear();
 
-		//Circle display
-		for(auto c : circles){
-			Point center(cvRound(c[0]), cvRound(c[1]));
-			int radius = cvRound(c[2]);
-			// Drawing of a big black circle first
-			circle(image, center, radius, Scalar(0,0,0));
-			// Drawing of a white circle on top of the black one, to make it looks like a black border
-			circle(image, center, radius-5, Scalar(255,255,255));
+			Mat roi = image(Rect(center.x - radius - 5, center.y - radius - 5, 2 * radius + 10, 2 * radius + 10));
+			goodFeaturesToTrack(roi, pointsSource, 500, 0.01, 10, Mat(), 3, 0, 0.04);
+			cornerSubPix(roi, pointsSource, Size(10,10), Size(-1, -1), TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03));
+			for (int i = 0; i < pointsSource.size(); i++) {
+				pointsSource[i].x += center.x - radius - 5;
+				pointsSource[i].y += center.y - radius - 5;
+			}
+
+			//Circle display
+			for(auto c : circles){
+				Point center(cvRound(c[0]), cvRound(c[1]));
+				int radius = cvRound(c[2]);
+				// Drawing of a big black circle first
+				circle(image, center, radius, Scalar(0,0,0));
+				// Drawing of a white circle on top of the black one, to make it looks like a black border
+				circle(image, center, radius-5, Scalar(255,255,255));
+			}
 		}
 	}
 	else if(ctrl->targetVisible){
@@ -307,25 +315,31 @@ void imgProcessing(cv::Mat& image){
 			vector<float> err;
 			calcOpticalFlowPyrLK(last_image, image, pointsSource, pointsFound, status, err, Size(31,31), 3, termcrit, 0, 0.001);
 
-			if(status[0]+status[1]+status[2]+status[3] == 4){
+			int successCount = 0;
+			for(int i=0 ; i<pointsFound.size() ; i++){
+				successCount+=status[i];
+			}
+
+			if(successCount >= 3*pointsFound.size()/4){
 				cout<<"\t Detected with optical flow"<<endl;
 
-				Point2f center(
-					(status[0]?pointsFound[0] : Point2f(0.0,0.0))+
-					(status[1]?pointsFound[1] : Point2f(0.0,0.0))+
-					(status[2]?pointsFound[2] : Point2f(0.0,0.0))+
-					(status[3]?pointsFound[3] : Point2f(0.0,0.0))
-				);
-				center.x /= (float)(status[0]+status[1]+status[2]+status[3]);
-				center.y /= (float)(status[0]+status[1]+status[2]+status[3]);
+				Point2f center(0,0);
+				int pointcount = 0;
+				for(int i=0 ; i<pointsFound.size() ; i++){
+					if(status[i])
+						center+=pointsFound[i];
+					pointcount+=status[i];
+				}
+
+				center.x /= (float)pointcount;
+				center.y /= (float)pointcount;
 
 				circle(image, center, 30, Scalar(0,0,0));
 				circle(image, center, 30-5, Scalar(255,255,255));
 
-				if(status[0]) circle(image, pointsFound[0], 5, Scalar(128,128,128));
-				if(status[1]) circle(image, pointsFound[1], 5, Scalar(128,128,128));
-				if(status[2]) circle(image, pointsFound[2], 5, Scalar(128,128,128));
-				if(status[3]) circle(image, pointsFound[3], 5, Scalar(128,128,128));
+				for(int i=0 ; i<pointsFound.size() ; i++){
+					if(status[i]) circle(image, pointsFound[i], 1, Scalar(128,128,128));
+				}
 
 
 				ctrl->targetVisible = true;
