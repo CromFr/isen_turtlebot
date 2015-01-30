@@ -53,18 +53,18 @@ public:
 
 	void Process(){
 		if(cliff[0] || cliff[1] || cliff[2]){
-			SetSpeed(-0.1, 0);
+			SetSpeed(-0.15, 0);
 			return;
 		}
 
 		// cout<<targetVisible<<"=> "<<target<<endl;
 		if(targetVisible){
 			if(m_trackingState==false){
-				Say("I found you");
+				Say("I found you.");
 				m_trackingState = true;
 			}
 
-			SetSpeed(0.1, target*2);
+			SetSpeed(0.1, -target*0.7);
 		}
 		else{
 			if(m_trackingState==true){
@@ -181,11 +181,20 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 void imgProcessing(cv::Mat& image){
 	using namespace cv;
 
+	GaussianBlur(image, image, Size(15, 15), 0, 0);
+
 	vector<Vec3f> circles;
-	//Find circles/targets
+	HoughCircles(image, circles, CV_HOUGH_GRADIENT, 1, image.rows/4, 70, 100);
 	if(circles.size()>0){
 		ctrl->targetVisible = 5;
 		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.rows)-1.0;
+
+		for(auto c : circles){
+			Point center(cvRound(c[0]), cvRound(c[1]));
+			int radius = cvRound(c[2]);
+			circle(image, center, radius, Scalar(0,0,0));
+			circle(image, center, radius-5, Scalar(255,255,255));
+		}
 	}
 	else{
 		if(ctrl->targetVisible>0)
@@ -198,19 +207,20 @@ void imgProcessing(cv::Mat& image){
 
 void imgCallback(const sensor_msgs::ImageConstPtr msg){
 	static int i = 0;
-	i = (i+1)%3;
+	i = (i+1)%2;
 	if(i!=0)return;
 
 	cv_bridge::CvImagePtr cv_ptr;
 	try{
-		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+		cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
 	}
 	catch (cv_bridge::Exception& e){
 		cerr<<"cv_bridge exception: "<<e.what()<<endl;;
 		return;
 	}
 
-	new thread(imgProcessing, cv_ptr->image);
+	thread t(imgProcessing, cv_ptr->image);
+	t.detach();
 }
 
 
