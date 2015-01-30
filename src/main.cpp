@@ -20,6 +20,7 @@ class Controller;
 Controller* ctrl;
 bool setColor = false;
 bool hasBeenSetColor = false;
+std::vector<int> color;
 void mesureColorAverage(cv_bridge::CvImagePtr& cv_ptr,vector<int>& color);
 void giveTheObjectPosition(cv_bridge::CvImagePtr& cv_ptr, std::vector<int>& color, std::vector<int>& position, int sections, float threshold);
 
@@ -163,7 +164,6 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 	i = (i+1)%3;
 	if(i!=0)return;
 
-	std::vector<int> color;
 	std::vector<int> position;//position in pixel of the object
 	int sections = 160;//we divide the picture in 160 parts
 	float threshold = 0.065;//detection threshold in % of 255, ex : 0.05 => 0.05*255
@@ -191,11 +191,8 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 			hasBeenSetColor = true;
 		}
 	}else{
-		cout << "coucou" << endl;
 		giveTheObjectPosition(cv_ptr, color, position, sections, threshold);
-		cout << "coucou2" << endl;
 		cv::rectangle(cv_ptr->image,cvPoint(position[0]-50,position[1]-50),cvPoint(position[0]+50,position[1]+50),CV_RGB(0,255,0),5,8);
-		cout << "coucou3" << endl;
 	}
 	cv::imshow("img", cv_ptr->image);
 	cv::waitKey(3);
@@ -237,18 +234,13 @@ void giveTheObjectPosition(cv_bridge::CvImagePtr& cv_ptr, std::vector<int>& colo
 	bool isColor[sections][sections];
 	int countColor = 0;
 	int countMax = 0;
-
-	cout << "hello" << endl;
-	position.clear();   // clear last position
 	
-	cout << "hello2" << endl;
 	for (int i=0; i<sections; i++){
 		for (int j=0; j<sections; j++){
 			isColor[i][j] = 0;
 		}
 	}
 	
-	cout << "hello3" << endl;
 	for(int boxY=0; boxY<sections; boxY++)
 	{
 		startY = pixelPerSectionsY * boxY;
@@ -270,7 +262,6 @@ void giveTheObjectPosition(cv_bridge::CvImagePtr& cv_ptr, std::vector<int>& colo
 					count++;
 				}
 			}
-	cout << "hello4" << endl;
 			//now we calcul the average and we compare it with the threshold
 			averageColor[0] = averageColor[0]/count;
 			averageColor[1] = averageColor[1]/count;
@@ -289,8 +280,7 @@ void giveTheObjectPosition(cv_bridge::CvImagePtr& cv_ptr, std::vector<int>& colo
 				
 		}
 		//we search for the maximums of the x and y sections in the tab isColor
-		
-	cout << "hello5" << endl;
+		position.push_back(0);
 		for(int x=0; x<sections; x++)
 		{
 			for(int y=0; y<sections; y++)
@@ -302,15 +292,16 @@ void giveTheObjectPosition(cv_bridge::CvImagePtr& cv_ptr, std::vector<int>& colo
 			}
 			if(countColor>countMax)//we push and convert the position from sections to pixels
 			{
+				//position.pop_back();
 				position.push_back(x*pixelPerSectionsX);
-				//printf("push x : %d ", x*pixelPerSectionsX);
+				//cout << "push x : " << x*pixelPerSectionsX << endl;
 				countMax = countColor;
 			}
 			countColor = 0;
 
 		}
-	cout << "hello6" << endl;
 		countMax = 0;
+		position.push_back(0);
 		for(int y=0; y<sections; y++)
 		{
 			for(int x=0; x<sections; x++)
@@ -322,15 +313,15 @@ void giveTheObjectPosition(cv_bridge::CvImagePtr& cv_ptr, std::vector<int>& colo
 			}
 			if(countColor>countMax)//we push and convert the position from sections to pixels
 			{
+				//position.pop_back();
 				position.push_back(y*pixelPerSectionsY);
-				//printf("push y : %d ",y*pixelPerSectionsY);
+				//cout << "push y : " << y*pixelPerSectionsY << endl;
 				countMax = countColor;
 			}
 			countColor = 0;
 		}
 		
 	}
-
 }
 
 
