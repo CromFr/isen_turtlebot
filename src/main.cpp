@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unistd.h>
+#include <thread>
 using namespace std;
 
 #include <ros/ros.h>
@@ -40,8 +41,9 @@ public:
 		cliff({false, false, false}),
 		wall({false, false, false}),
 		buttons({false, false}),
-		targetVisible(false),
-		target(0.0)
+		targetVisible(0),
+		target(0.0),
+		m_trackingState(false)
 	{
 		SetLed(1, Controller::color::BLACK);
 		SetLed(2, Controller::color::BLACK);
@@ -52,9 +54,26 @@ public:
 	void Process(){
 		if(cliff[0] || cliff[1] || cliff[2]){
 			SetSpeed(-0.1, 0);
+			return;
 		}
 
-		cout<<targetVisible<<"=> "<<target<<endl;
+		// cout<<targetVisible<<"=> "<<target<<endl;
+		if(targetVisible){
+			if(m_trackingState==false){
+				Say("I found you");
+				m_trackingState = true;
+			}
+
+			SetSpeed(0.1, target*2);
+		}
+		else{
+			if(m_trackingState==true){
+				Say("Where are you?");
+				m_trackingState = false;
+			}
+
+		}
+
 	}
 
 
@@ -72,6 +91,8 @@ public:
 		geometry_msgs::Twist msg;
 		msg.linear.x = lin;
 		msg.angular.x = rot;
+		msg.angular.y = rot;
+		msg.angular.z = rot;
 		pub_velocity.publish(msg);
 	}
 
@@ -103,7 +124,7 @@ public:
 	bool wall[3];
 	bool buttons[2];
 
-	bool targetVisible;
+	int targetVisible;
 	float target;
 
 	bool IsOnCliff(){
@@ -116,6 +137,8 @@ private:
 		msg.data = cmd.c_str();
 		pub_shellcmd.publish(msg);
 	}
+
+	bool m_trackingState;
 
 };
 
@@ -133,7 +156,7 @@ void buttonCallback(const kobuki_msgs::ButtonEventConstPtr msg){
 	}
 	else if(msg->button == kobuki_msgs::ButtonEvent::Button1){
 		if(msg->state == kobuki_msgs::ButtonEvent::PRESSED)
-			ctrl->SetSpeed(0.1,0);
+			ctrl->SetSpeed(0.1,0.0);
 	}
 	else if(msg->button == kobuki_msgs::ButtonEvent::Button2){
 		if(msg->state == kobuki_msgs::ButtonEvent::PRESSED)
@@ -154,6 +177,25 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 		ctrl->Say("Ouch");
 	}
 }
+
+void imgProcessing(cv::Mat& image){
+	using namespace cv;
+
+	vector<Vec3f> circles;
+	//Find circles/targets
+	if(circles.size()>0){
+		ctrl->targetVisible = 5;
+		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.rows)-1.0;
+	}
+	else{
+		if(ctrl->targetVisible>0)
+			ctrl->targetVisible--;
+	}
+
+	imshow("img", image);
+	waitKey(3);
+}
+
 void imgCallback(const sensor_msgs::ImageConstPtr msg){
 	static int i = 0;
 	i = (i+1)%3;
@@ -167,23 +209,8 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 		cerr<<"cv_bridge exception: "<<e.what()<<endl;;
 		return;
 	}
-	//OpenCV Processing:
-	//===================
-	using namespace cv;
 
-	vector<Vec3f> circles;
-	HoughCircles(cv_ptr->image, circles, CV_HOUGH_GRADIENT, 1, cv_ptr->image.rows/4, 70, 100, 5, 0 );
-	if(circles.size()>0){
-		ctrl->targetVisible = true;
-
-		ctrl->target = 2.0*(float)(circles[0][0])/(float)(cv_ptr->image.rows)-1.0;
-	}
-	else{
-		ctrl->targetVisible = false;
-	}
-
-	cv::imshow("img", cv_ptr->image);
-	cv::waitKey(3);
+	new thread(imgProcessing, cv_ptr->image);
 }
 
 
