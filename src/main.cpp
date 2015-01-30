@@ -198,29 +198,37 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	}
 }
 
+// Picture processing function
 void imgProcessing(cv::Mat& image){
 	using namespace cv;
 
+	// 15x15 Gaussian Blur applied to the picture to simplify the circles detection
 	GaussianBlur(image, image, Size(15, 15), 0, 0);
 
+	// Circles search in the picture
 	vector<Vec3f> circles;
 	HoughCircles(image, circles, CV_HOUGH_GRADIENT, 1, image.rows/4, 70, 100);
 	if(circles.size()>0){
 		ctrl->targetVisible = 5;
 		ctrl->target = 2.0*(float)(circles[0][0])/(float)(image.rows)-1.0;
 
+		// Display all the circles on the picture
 		for(auto c : circles){
 			Point center(cvRound(c[0]), cvRound(c[1]));
 			int radius = cvRound(c[2]);
+			// Drawing of a big black circle first
 			circle(image, center, radius, Scalar(0,0,0));
+			// Drawing of a white circle on top of the black one, to make it looks like a black border
 			circle(image, center, radius-5, Scalar(255,255,255));
 		}
 	}
 	else{
+		// If no circles detected, let 5 iterations goes before alert on the lack of circle (avoid short error in detections)
 		if(ctrl->targetVisible>0)
 			ctrl->targetVisible--;
 	}
 
+	// Display the picture
 	imshow("img", image);
 	waitKey(3);
 }
@@ -244,27 +252,33 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 }
 
 
+// Access to the program
 int main(int argc, char** argv){
+	// Initialize random number generator
 	srand(time(NULL));
 
 	ros::init(argc, argv, "itb_main");
 	node = new ros::NodeHandle;
 
-	//Subscribe to sensors
-	sub_bumper = node->subscribe("/mobile_base/events/bumper", 1000, bumperCallback);
-	sub_button = node->subscribe("/mobile_base/events/button", 1000, buttonCallback);
-	sub_cliff = node->subscribe("/mobile_base/events/cliff", 1000, cliffCallback);
-	sub_img = node->subscribe("/camera/rgb/image_color", 1, imgCallback);
+	// Subscribe to sensors
+	sub_bumper = node->subscribe("/mobile_base/events/bumper", 1000, bumperCallback); // Topic bumper
+	sub_button = node->subscribe("/mobile_base/events/button", 1000, buttonCallback); // Topic button
+	sub_cliff = node->subscribe("/mobile_base/events/cliff", 1000, cliffCallback); // Topic cliff
+	sub_img = node->subscribe("/camera/rgb/image_color", 1, imgCallback); // Topic Kinect RGB camera stream
 
-	pub_velocity = node->advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1000);
-	pub_led1 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led1", 1000);
-	pub_led2 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led2", 1000);
-	pub_shellcmd = node->advertise<std_msgs::String>("itb_shellcmd_topic", 1000);
+	// Publish variables
+	pub_velocity = node->advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1000); // Topic speed
+	pub_led1 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led1", 1000); // Topic led1
+	pub_led2 = node->advertise<kobuki_msgs::Led>("/mobile_base/commands/led2", 1000); // Topic led2
+	pub_shellcmd = node->advertise<std_msgs::String>("itb_shellcmd_topic", 1000); // Topic to send command directly into the robot's shell
 
+	// Waiting time to let every subscriber/publisher to initialize
 	usleep(1000000);
 
+	// Creating a new controller
 	ctrl = new Controller();
 
+	// Tuning the looping rate
 	ros::Rate loopRate(10);
 	while(ros::ok()){
 		ctrl->Process();
