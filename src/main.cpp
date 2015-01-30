@@ -218,7 +218,9 @@ void bumperCallback(const kobuki_msgs::BumperEventConstPtr msg){
 	}
 }
 
-// Picture processing function
+/*
+Picture processing function
+*/
 void imgProcessing(cv::Mat& image){
 	using namespace cv;
 
@@ -277,7 +279,9 @@ void imgCallback(const sensor_msgs::ImageConstPtr msg){
 }
 
 
-// Access to the program
+/*
+Access to the program
+*/
 int main(int argc, char** argv){
 	// Initialize random number generator
 	srand(time(NULL));
