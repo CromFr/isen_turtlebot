@@ -131,7 +131,7 @@ public:
 	// The robot speaks using its speaker
 	void Say(const string& text){
 		cout<<"Turtlebot says: "<<text<<endl;
-		SendCommand("~/speak \""+text+"\"");
+		SendCommand("~/speak \""+text+"\"&");
 	}
 
 	// Play a sound
